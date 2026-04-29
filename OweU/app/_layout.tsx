@@ -3,22 +3,68 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppProvider } from '@/store/app-context';
+import { ThemeContextProvider, useTheme } from '@/store/theme-context';
+import { darkColors, lightColors } from '@/constants/theme';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+// Stable module-level theme objects so ThemeProvider never gets a new reference
+const NAV_THEMES = {
+  dark: {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      background: darkColors.bg,
+      card: darkColors.bg,
+      text: darkColors.textPrimary,
+      border: darkColors.border,
+      primary: darkColors.textPrimary,
+    },
+  },
+  light: {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: lightColors.bg,
+      card: lightColors.bg,
+      text: lightColors.textPrimary,
+      border: lightColors.border,
+      primary: lightColors.textPrimary,
+    },
+  },
+} as const;
+
+function ThemedNavigator() {
+  const { colorMode, colors } = useTheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <ThemeProvider value={NAV_THEMES[colorMode]}>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.bg },
+          headerTintColor: colors.textPrimary,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: colors.bg },
+          headerBackTitle: 'Zurück',
+        }}
+      >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AppProvider>
+      <ThemeContextProvider>
+        <ThemedNavigator />
+      </ThemeContextProvider>
+    </AppProvider>
   );
 }
