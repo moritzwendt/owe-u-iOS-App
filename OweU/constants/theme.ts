@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-// ─── Color Scheme Type ────────────────────────────────────────────────────────
+// MARK: - Color Scheme Type
 
 export type ColorScheme = {
   bg: string;
@@ -22,7 +22,7 @@ export type ColorScheme = {
   error: string;
 };
 
-// ─── Dark Palette ─────────────────────────────────────────────────────────────
+// MARK: - Dark Palette
 
 export const darkColors: ColorScheme = {
   bg: '#0F0F14',
@@ -44,7 +44,7 @@ export const darkColors: ColorScheme = {
   error: '#FF5C5C',
 };
 
-// ─── Light Palette ────────────────────────────────────────────────────────────
+// MARK: - Light Palette
 
 export const lightColors: ColorScheme = {
   bg: '#F2F2F7',
@@ -70,10 +70,9 @@ export function getColors(mode: 'dark' | 'light'): ColorScheme {
   return mode === 'dark' ? darkColors : lightColors;
 }
 
-// Static dark alias — for legacy imports that haven't been migrated yet
 export const C = darkColors;
 
-// ─── Spacing ──────────────────────────────────────────────────────────────────
+// MARK: - Spacing
 
 export const S = {
   xs: 4,
@@ -87,7 +86,7 @@ export const S = {
   screenPad: 20,
 };
 
-// ─── Border Radius ────────────────────────────────────────────────────────────
+// MARK: - Radius
 
 export const R = {
   xs: 6,
@@ -98,14 +97,14 @@ export const R = {
   pill: 9999,
 };
 
-// ─── Fonts ────────────────────────────────────────────────────────────────────
+// MARK: - Fonts
 
 export const F = Platform.select({
   ios: { system: undefined as unknown as string },
   default: { system: undefined as unknown as string },
 })!;
 
-// ─── Legacy compatibility exports ─────────────────────────────────────────────
+// MARK: - Legacy
 
 export const Colors = {
   light: {

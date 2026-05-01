@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,6 +11,8 @@ import Animated, {
 import { S, R } from '@/constants/theme';
 import { useColors } from '@/store/theme-context';
 import { useApp } from '@/store/app-context';
+
+// MARK: - Helpers
 
 function fmt(n: number): string {
   return `${Math.abs(n).toFixed(2).replace('.', ',')} €`;
@@ -38,6 +40,8 @@ function useFadeSlide(delay: number) {
     transform: [{ translateY: translateY.value }],
   }));
 }
+
+// MARK: - Components
 
 function NettoCard({ netto }: { netto: number }) {
   const C = useColors();
@@ -125,8 +129,11 @@ function TransactionRow({
   );
 }
 
+// MARK: - Screen
+
 export default function UebersichtScreen() {
   const C = useColors();
+  const insets = useSafeAreaInsets();
   const { schulden, forderungen } = useApp();
 
   const openSchulden = schulden.filter(s => !s.bezahlt).reduce((sum, s) => sum + s.betrag, 0);
@@ -143,8 +150,12 @@ export default function UebersichtScreen() {
   const sectionAnim = useFadeSlide(360);
 
   return (
-    <SafeAreaView style={[layout.safe, { backgroundColor: C.bg }]} edges={['top']}>
-      <ScrollView style={layout.scroll} contentContainerStyle={layout.content} showsVerticalScrollIndicator={false}>
+    <View style={[layout.safe, { backgroundColor: C.bg }]}>
+      <ScrollView
+        style={layout.scroll}
+        contentContainerStyle={[layout.content, { paddingTop: insets.top + S.xl }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={[layout.screenTitle, { color: C.textPrimary }]}>OweYou</Text>
 
         <NettoCard netto={netto} />
@@ -175,15 +186,16 @@ export default function UebersichtScreen() {
           </View>
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-// Static layout styles — no colors
+// MARK: - Styles
+
 const layout = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: S.screenPad, paddingTop: S.xl, paddingBottom: S.section, gap: S.base },
+  content: { paddingHorizontal: S.screenPad, paddingBottom: S.section, gap: S.base },
   screenTitle: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5, marginBottom: S.xs },
   nettoCard: { borderRadius: R.lg, padding: S.xl, borderWidth: 1, borderLeftWidth: 3, gap: S.xs },
   nettoEyebrow: { fontSize: 10, fontWeight: '600', letterSpacing: 1.2 },

@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import 'react-native-reanimated';
 
 import { AppProvider } from '@/store/app-context';
@@ -11,7 +12,6 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-// Stable module-level theme objects so ThemeProvider never gets a new reference
 const NAV_THEMES = {
   dark: {
     ...DarkTheme,
@@ -41,21 +41,22 @@ function ThemedNavigator() {
   const { colorMode, colors } = useTheme();
 
   return (
-    <ThemeProvider value={NAV_THEMES[colorMode]}>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.bg },
-          headerTintColor: colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: colors.bg },
-          headerBackTitle: 'Zurück',
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
-    </ThemeProvider>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ThemeProvider value={NAV_THEMES[colorMode]}>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.bg },
+            headerTintColor: colors.textPrimary,
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: colors.bg },
+            headerBackTitle: 'Zurück',
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
+      </ThemeProvider>
+    </View>
   );
 }
 
