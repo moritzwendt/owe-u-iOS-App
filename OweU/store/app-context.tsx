@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Settings } from 'react-native';
+
+// MARK: - Types
 
 export type Schuld = {
   id: string;
@@ -20,17 +23,28 @@ export type Forderung = {
   erhaltenAm?: string;
 };
 
-const initialSchulden: Schuld[] = [
-  { id: '1', person: 'Max Rieder', betrag: 45.0, beschreibung: 'Dinner am Dienstag', datum: '2025-04-28', bezahlt: false },
-  { id: '2', person: 'Lena Weiss', betrag: 12.5, beschreibung: 'Kaffeepause', datum: '2025-04-27', bezahlt: false },
-  { id: '3', person: 'Tom Bauer', betrag: 80.0, beschreibung: 'Konzertticket', datum: '2025-04-20', bezahlt: true },
-];
+// MARK: - Persistence
 
-const initialForderungen: Forderung[] = [
-  { id: '1', person: 'Sara Klein', betrag: 30.0, beschreibung: 'Taxi-Split', datum: '2025-04-28', erhalten: false },
-  { id: '2', person: 'Jonas Graf', betrag: 55.5, beschreibung: 'Gruppenessen', datum: '2025-04-25', erhalten: false },
-  { id: '3', person: 'Mia Steiner', betrag: 20.0, beschreibung: 'Kino', datum: '2025-04-18', erhalten: true },
-];
+const KEYS = {
+  schulden: 'app_schulden',
+  forderungen: 'app_forderungen',
+  hiddenPersons: 'app_hiddenPersons',
+  hiddenDescriptions: 'app_hiddenDescriptions',
+};
+
+function load<T>(key: string, fallback: T): T {
+  try {
+    const raw = Settings.get(key) as string | null;
+    if (raw) return JSON.parse(raw) as T;
+  } catch {}
+  return fallback;
+}
+
+function persist(key: string, value: unknown) {
+  Settings.set({ [key]: JSON.stringify(value) });
+}
+
+// MARK: - Context
 
 type AppContextType = {
   schulden: Schuld[];
@@ -47,11 +61,18 @@ type AppContextType = {
 
 const AppContext = createContext<AppContextType | null>(null);
 
+// MARK: - Provider
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [schulden, setSchulden] = useState<Schuld[]>(initialSchulden);
-  const [forderungen, setForderungen] = useState<Forderung[]>(initialForderungen);
-  const [hiddenPersons, setHiddenPersons] = useState<string[]>([]);
-  const [hiddenDescriptions, setHiddenDescriptions] = useState<string[]>([]);
+  const [schulden, setSchulden] = useState<Schuld[]>(() => load(KEYS.schulden, []));
+  const [forderungen, setForderungen] = useState<Forderung[]>(() => load(KEYS.forderungen, []));
+  const [hiddenPersons, setHiddenPersons] = useState<string[]>(() => load(KEYS.hiddenPersons, []));
+  const [hiddenDescriptions, setHiddenDescriptions] = useState<string[]>(() => load(KEYS.hiddenDescriptions, []));
+
+  useEffect(() => { persist(KEYS.schulden, schulden); }, [schulden]);
+  useEffect(() => { persist(KEYS.forderungen, forderungen); }, [forderungen]);
+  useEffect(() => { persist(KEYS.hiddenPersons, hiddenPersons); }, [hiddenPersons]);
+  useEffect(() => { persist(KEYS.hiddenDescriptions, hiddenDescriptions); }, [hiddenDescriptions]);
 
   function addSchuld(s: Omit<Schuld, 'id'>) {
     setSchulden(prev => [{ ...s, id: Date.now().toString() }, ...prev]);

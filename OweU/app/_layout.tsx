@@ -1,12 +1,16 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 
 import { AppProvider } from '@/store/app-context';
 import { ThemeContextProvider, useTheme } from '@/store/theme-context';
 import { darkColors, lightColors } from '@/constants/theme';
+
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -39,6 +43,10 @@ const NAV_THEMES = {
 
 function ThemedNavigator() {
   const { colorMode, colors } = useTheme();
+
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

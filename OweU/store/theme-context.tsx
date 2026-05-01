@@ -1,9 +1,17 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Settings } from 'react-native';
 import { ColorScheme, darkColors, lightColors } from '@/constants/theme';
 
 export type ThemePreference = 'system' | 'hell' | 'dunkel';
 export type ColorMode = 'dark' | 'light';
+
+const SETTINGS_KEY = 'themePreference';
+
+function loadPreference(): ThemePreference {
+  const stored = Settings.get(SETTINGS_KEY) as ThemePreference | null;
+  if (stored === 'hell' || stored === 'dunkel' || stored === 'system') return stored;
+  return 'system';
+}
 
 interface ThemeContextType {
   preference: ThemePreference;
@@ -13,7 +21,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  preference: 'dunkel',
+  preference: 'system',
   colorMode: 'dark',
   colors: darkColors,
   setPreference: () => {},
@@ -21,7 +29,7 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export function ThemeContextProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
-  const [preference, setPreference] = useState<ThemePreference>('dunkel');
+  const [preference, setPreferenceState] = useState<ThemePreference>(loadPreference);
 
   const colorMode: ColorMode = useMemo(() => {
     if (preference === 'hell') return 'light';
@@ -30,6 +38,11 @@ export function ThemeContextProvider({ children }: { children: React.ReactNode }
   }, [preference, systemScheme]);
 
   const colors = colorMode === 'dark' ? darkColors : lightColors;
+
+  function setPreference(p: ThemePreference) {
+    Settings.set({ [SETTINGS_KEY]: p });
+    setPreferenceState(p);
+  }
 
   return (
     <ThemeContext.Provider value={{ preference, colorMode, colors, setPreference }}>

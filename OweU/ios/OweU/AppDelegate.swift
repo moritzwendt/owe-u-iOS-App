@@ -23,13 +23,38 @@ public class AppDelegate: ExpoAppDelegate {
 
 #if os(iOS) || os(tvOS)
     window = UIWindow(frame: UIScreen.main.bounds)
+    window?.backgroundColor = storedThemeBackground()
     factory.startReactNative(
       withModuleName: "main",
       in: window,
       launchOptions: launchOptions)
 #endif
 
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
+
+    DispatchQueue.main.async {
+      self.applySplashBackground()
+    }
+
+    return result
+  }
+
+  private func storedThemeBackground() -> UIColor {
+    let preference = UserDefaults.standard.string(forKey: "themePreference") ?? "system"
+    let isDark: Bool
+    switch preference {
+    case "dunkel": isDark = true
+    case "hell":   isDark = false
+    default:       isDark = UITraitCollection.current.userInterfaceStyle == .dark
+    }
+    return isDark
+      ? UIColor(red: 15/255, green: 15/255, blue: 20/255, alpha: 1)   // #0F0F14
+      : UIColor(red: 242/255, green: 242/255, blue: 247/255, alpha: 1) // #F2F2F7
+  }
+
+  private func applySplashBackground() {
+    let bg = storedThemeBackground()
+    window?.subviews.forEach { $0.backgroundColor = bg }
   }
 
   // Linking API
@@ -53,10 +78,7 @@ public class AppDelegate: ExpoAppDelegate {
 }
 
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
-  // Extension point for config-plugins
-
   override func sourceURL(for bridge: RCTBridge) -> URL? {
-    // needed to return the correct URL for expo-dev-client.
     bridge.bundleURL ?? bundleURL()
   }
 

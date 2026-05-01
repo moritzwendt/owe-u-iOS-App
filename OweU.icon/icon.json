@@ -1,0 +1,47 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.48627,0.41569,0.96863,1.00000",
+      "srgb:0.38431,0.34902,0.90980,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : {
+                "automatic-gradient" : "srgb:0.00000,0.06661,0.22244,1.00000"
+              }
+            }
+          ],
+          "image-name" : "OweU 2.png",
+          "name" : "OweU 2",
+          "position" : {
+            "scale" : 0.47,
+            "translation-in-points" : [
+              0,
+              -6
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

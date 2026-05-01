@@ -16,6 +16,10 @@ import { router } from 'expo-router';
 import { useColors, useTheme, type ThemePreference } from '@/store/theme-context';
 import { S, R } from '@/constants/theme';
 
+// MARK: - App Version
+
+const APP_VERSION = '1.0.1';
+
 const MOCK_USER = {
   name: 'Max Mustermann',
   email: 'max@oweyou.app',
@@ -278,7 +282,7 @@ export default function ProfilScreen() {
         <View style={layout.footer}>
           <View style={layout.footerGitHub}>
             <Ionicons name="logo-github" size={13} color={C.textDim} />
-            <Text style={[layout.footerText, { color: C.textDim }]}>OweYou</Text>
+            <Text style={[layout.footerVersion, { color: C.textDim }]}>OweYou {APP_VERSION}</Text>
           </View>
           {commit ? (
             <>
@@ -323,4 +327,5 @@ const layout = StyleSheet.create({
   footerGitHub: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   footerText: { fontSize: 11 },
   footerCommit: { fontSize: 11, fontWeight: '500' },
+  footerVersion: { fontSize: 12, fontWeight: '500', marginBottom: 2 },
 });

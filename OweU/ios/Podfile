@@ -59,5 +59,18 @@ target 'OweU' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Fix for paths with spaces (e.g. iCloud Drive): `bash -l -c "path"` splits at spaces.
+    # Removing -c makes bash treat the argument as a script file path instead of a command string.
+    installer.pods_project.targets.each do |target|
+      target.build_phases.each do |phase|
+        next unless phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase)
+        next unless phase.shell_script.include?('get-app-config-ios.sh')
+        phase.shell_script = phase.shell_script.gsub(
+          'bash -l -c "$PODS_TARGET_SRCROOT/../scripts/get-app-config-ios.sh"',
+          'bash -l "$PODS_TARGET_SRCROOT/../scripts/get-app-config-ios.sh"'
+        )
+      end
+    end
   end
 end
