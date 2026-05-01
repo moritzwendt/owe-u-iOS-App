@@ -23,23 +23,30 @@ public class AppDelegate: ExpoAppDelegate {
 
 #if os(iOS) || os(tvOS)
     window = UIWindow(frame: UIScreen.main.bounds)
-    window?.backgroundColor = storedThemeBackground()
+    window?.backgroundColor = themeBackground()
     factory.startReactNative(
       withModuleName: "main",
       in: window,
       launchOptions: launchOptions)
 #endif
 
+    // Synchronous pass — catches the splash view if expo-splash-screen
+    // inserts it during startReactNative (view controller lifecycle).
+    colorAllWindows()
+
     let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
 
-    DispatchQueue.main.async {
-      self.applySplashBackground()
-    }
+    // Two deferred passes — catch the splash view if it is inserted
+    // asynchronously after the bridge finishes loading modules.
+    DispatchQueue.main.async { self.colorAllWindows() }
+    DispatchQueue.main.async { DispatchQueue.main.async { self.colorAllWindows() } }
 
     return result
   }
 
-  private func storedThemeBackground() -> UIColor {
+  // MARK: - Theme
+
+  private func themeBackground() -> UIColor {
     let preference = UserDefaults.standard.string(forKey: "themePreference") ?? "system"
     let isDark: Bool
     switch preference {
@@ -48,16 +55,37 @@ public class AppDelegate: ExpoAppDelegate {
     default:       isDark = UITraitCollection.current.userInterfaceStyle == .dark
     }
     return isDark
-      ? UIColor(red: 15/255, green: 15/255, blue: 20/255, alpha: 1)   // #0F0F14
-      : UIColor(red: 242/255, green: 242/255, blue: 247/255, alpha: 1) // #F2F2F7
+      ? UIColor(red: 15/255, green: 15/255, blue: 20/255, alpha: 1)
+      : UIColor(red: 242/255, green: 242/255, blue: 247/255, alpha: 1)
   }
 
-  private func applySplashBackground() {
-    let bg = storedThemeBackground()
-    window?.subviews.forEach { $0.backgroundColor = bg }
+  // MARK: - Splash Coloring
+
+  private func colorAllWindows() {
+    let bg = themeBackground()
+    // Iterate every window in the app — expo-splash-screen may open
+    // its own UIWindow with an elevated windowLevel.
+    let windows = UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+    for win in windows {
+      win.backgroundColor = bg
+      win.subviews.forEach { $0.backgroundColor = bg }
+      colorViewControllerHierarchy(win.rootViewController, background: bg)
+    }
   }
 
-  // Linking API
+  // Recurses through presented VCs and child VCs so the expo-splash-screen
+  // view controller is reached regardless of how it is attached.
+  private func colorViewControllerHierarchy(_ vc: UIViewController?, background: UIColor) {
+    guard let vc = vc else { return }
+    vc.view.backgroundColor = background
+    colorViewControllerHierarchy(vc.presentedViewController, background: background)
+    vc.children.forEach { colorViewControllerHierarchy($0, background: background) }
+  }
+
+  // MARK: - Linking
+
   public override func application(
     _ app: UIApplication,
     open url: URL,
@@ -66,7 +94,6 @@ public class AppDelegate: ExpoAppDelegate {
     return super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
   }
 
-  // Universal Links
   public override func application(
     _ application: UIApplication,
     continue userActivity: NSUserActivity,

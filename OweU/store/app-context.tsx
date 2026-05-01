@@ -57,6 +57,7 @@ type AppContextType = {
   hiddenDescriptions: string[];
   hidePersonSuggestion: (name: string) => void;
   hideDescriptionSuggestion: (desc: string) => void;
+  resetAll: () => void;
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -106,6 +107,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHiddenDescriptions(prev => [...prev, desc]);
   }
 
+  function resetAll() {
+    setSchulden([]);
+    setForderungen([]);
+  }
+
   return (
     <AppContext.Provider value={{
       schulden, forderungen,
@@ -113,6 +119,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleBezahlt, toggleErhalten,
       hiddenPersons, hiddenDescriptions,
       hidePersonSuggestion, hideDescriptionSuggestion,
+      resetAll,
     }}>
       {children}
     </AppContext.Provider>

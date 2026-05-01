@@ -14,11 +14,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useColors, useTheme, type ThemePreference } from '@/store/theme-context';
+import { useApp } from '@/store/app-context';
 import { S, R } from '@/constants/theme';
 
 // MARK: - App Version
 
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.0.5';
 
 const MOCK_USER = {
   name: 'Max Mustermann',
@@ -164,6 +165,7 @@ export default function ProfilScreen() {
   const C = useColors();
   const insets = useSafeAreaInsets();
   const { preference, setPreference } = useTheme();
+  const { resetAll } = useApp();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [commit, setCommit] = useState<CommitInfo | null>(null);
@@ -192,7 +194,13 @@ export default function ProfilScreen() {
   function handleResetData() {
     Alert.alert('Alle Einträge löschen', 'Schulden und Forderungen werden unwiderruflich gelöscht.', [
       { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Löschen', style: 'destructive', onPress: () => Alert.alert('Einträge gelöscht') },
+      {
+        text: 'Löschen', style: 'destructive',
+        onPress: () => Alert.alert('Bist du sicher?', 'Diese Aktion kann nicht rückgängig gemacht werden.', [
+          { text: 'Abbrechen', style: 'cancel' },
+          { text: 'Endgültig löschen', style: 'destructive', onPress: resetAll },
+        ]),
+      },
     ]);
   }
 

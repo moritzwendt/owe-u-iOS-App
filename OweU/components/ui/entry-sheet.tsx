@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   Alert,
   Platform,
   StyleSheet,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/store/theme-context';
@@ -36,6 +38,8 @@ interface EntrySheetProps {
 // MARK: - Helpers
 
 const QUICK_STEPS = [-10, -5, 5, 10, 15];
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 function today(): string {
   return new Date().toISOString().split('T')[0];
@@ -210,20 +214,38 @@ export function EntrySheet({ visible, mode, onClose, onSave }: EntrySheetProps) 
   const [error, setError] = useState('');
   const amountRef = useRef<TextInput>(null);
 
-  const isSchuld = mode === 'schuld';
-  const title = isSchuld ? 'Neue Schuld' : 'Neue Forderung';
-  const accentColor = isSchuld ? C.negative : C.positive;
-  const accentMuted = isSchuld ? C.negativeMuted : C.positiveMuted;
-  const personPlaceholder = isSchuld ? 'Name eingeben' : 'Wer schuldet dir?';
-  const cents = parseCents(betragRaw);
+  // Internal visibility stays true during the closing animation so the
+  // Modal doesn't unmount before the animation finishes.
+  const [internalVisible, setInternalVisible] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
 
-  const allEntries = [...schulden, ...forderungen].sort((a, b) => b.datum.localeCompare(a.datum));
-  const personSuggestions = uniqueOrdered(
-    allEntries.map(e => e.person).filter(p => !hiddenPersons.includes(p))
-  );
-  const beschreibungSuggestions = uniqueOrdered(
-    allEntries.map(e => e.beschreibung).filter(d => !hiddenDescriptions.includes(d))
-  );
+  const overlayOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.6] });
+  const sheetTranslateY = anim.interpolate({ inputRange: [0, 1], outputRange: [SCREEN_HEIGHT, 0] });
+
+  useEffect(() => {
+    if (visible) {
+      setInternalVisible(true);
+      anim.setValue(0);
+      Animated.spring(anim, {
+        toValue: 1,
+        damping: 20,
+        stiffness: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
+
+  function dismiss() {
+    Animated.timing(anim, {
+      toValue: 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => {
+      setInternalVisible(false);
+      reset();
+      onClose();
+    });
+  }
 
   function reset() {
     setPerson('');
@@ -234,8 +256,7 @@ export function EntrySheet({ visible, mode, onClose, onSave }: EntrySheetProps) 
 
   function handleClose() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    reset();
-    onClose();
+    dismiss();
   }
 
   function handleSave() {
@@ -251,8 +272,7 @@ export function EntrySheet({ visible, mode, onClose, onSave }: EntrySheetProps) 
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onSave({ person: person.trim(), betrag: cents / 100, beschreibung: beschreibung.trim(), datum: today() });
-    reset();
-    onClose();
+    dismiss();
   }
 
   function handleQuickStep(step: number) {
@@ -262,96 +282,119 @@ export function EntrySheet({ visible, mode, onClose, onSave }: EntrySheetProps) 
     setError('');
   }
 
+  const isSchuld = mode === 'schuld';
+  const title = isSchuld ? 'Neue Schuld' : 'Neue Forderung';
+  const accentColor = isSchuld ? C.negative : C.positive;
+  const accentMuted = isSchuld ? C.negativeMuted : C.positiveMuted;
+  const personPlaceholder = isSchuld ? 'Name eingeben' : 'Wer schuldet dir?';
+  const cents = parseCents(betragRaw);
+
+  const allEntries = [...schulden, ...forderungen].sort((a, b) => b.datum.localeCompare(a.datum));
+  const personSuggestions = uniqueOrdered(
+    allEntries.map(e => e.person).filter(p => !hiddenPersons.includes(p))
+  );
+  const beschreibungSuggestions = uniqueOrdered(
+    allEntries.map(e => e.beschreibung).filter(d => !hiddenDescriptions.includes(d))
+  );
+
   // MARK: - Render
 
   return (
-    <Modal visible={visible} animationType="slide" transparent presentationStyle="overFullScreen">
-      <TouchableOpacity style={layout.overlay} activeOpacity={1} onPress={handleClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={layout.sheetWrap}>
-        <ScrollView
-          style={[layout.sheet, { backgroundColor: C.surfaceElevated, borderColor: C.border }]}
-          contentContainerStyle={layout.sheetContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={[layout.handle, { backgroundColor: C.border }]} />
-          <Text style={[layout.title, { color: C.textPrimary }]}>{title}</Text>
-
-          <Pressable
-            style={[layout.amountBox, { backgroundColor: accentMuted }]}
-            onPress={() => amountRef.current?.focus()}
-          >
-            <Text style={[layout.amountEuro, { color: accentColor }]}>€</Text>
-            <Text
-              style={[layout.amountValue, { color: cents > 0 ? C.textPrimary : C.textDim }]}
-              adjustsFontSizeToFit
-              numberOfLines={1}
+    <Modal visible={internalVisible} animationType="none" transparent presentationStyle="overFullScreen">
+      <View style={layout.container}>
+        <AnimatedTouchable
+          style={[layout.overlay, { opacity: overlayOpacity }]}
+          activeOpacity={1}
+          onPress={handleClose}
+        />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={layout.sheetWrap}>
+          <Animated.View style={{ transform: [{ translateY: sheetTranslateY }] }}>
+            <ScrollView
+              style={[layout.sheet, { backgroundColor: C.surfaceElevated, borderColor: C.border }]}
+              contentContainerStyle={layout.sheetContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
-              {cents > 0 ? centsToString(cents) : '0,00'}
-            </Text>
-          </Pressable>
+              <View style={[layout.handle, { backgroundColor: C.border }]} />
+              <Text style={[layout.title, { color: C.textPrimary }]}>{title}</Text>
 
-          <View style={layout.quickRow}>
-            {QUICK_STEPS.map(step => (
               <Pressable
-                key={step}
-                style={({ pressed }) => [
-                  layout.quickBtn,
-                  {
-                    backgroundColor: pressed
-                      ? (step < 0 ? C.negativeMuted : C.positiveMuted)
-                      : C.surface,
-                    borderColor: step < 0 ? C.negative : C.positive,
-                  },
-                ]}
-                onPress={() => handleQuickStep(step)}
+                style={[layout.amountBox, { backgroundColor: accentMuted }]}
+                onPress={() => amountRef.current?.focus()}
               >
-                <Text style={[layout.quickBtnText, { color: step < 0 ? C.negative : C.positive }]}>
-                  {step > 0 ? `+${step}` : String(step)}
+                <Text style={[layout.amountEuro, { color: accentColor }]}>€</Text>
+                <Text
+                  style={[layout.amountValue, { color: cents > 0 ? C.textPrimary : C.textDim }]}
+                  adjustsFontSizeToFit
+                  numberOfLines={1}
+                >
+                  {cents > 0 ? centsToString(cents) : '0,00'}
                 </Text>
               </Pressable>
-            ))}
-          </View>
 
-          <SuggestField
-            label="PERSON"
-            value={person}
-            onChangeText={t => { setPerson(t); setError(''); }}
-            placeholder={personPlaceholder}
-            suggestions={personSuggestions}
-            onDeleteSuggestion={hidePersonSuggestion}
-            autoCapitalize="words"
-          />
+              <View style={layout.quickRow}>
+                {QUICK_STEPS.map(step => (
+                  <Pressable
+                    key={step}
+                    style={({ pressed }) => [
+                      layout.quickBtn,
+                      {
+                        backgroundColor: pressed
+                          ? (step < 0 ? C.negativeMuted : C.positiveMuted)
+                          : C.surface,
+                        borderColor: step < 0 ? C.negative : C.positive,
+                      },
+                    ]}
+                    onPress={() => handleQuickStep(step)}
+                  >
+                    <Text style={[layout.quickBtnText, { color: step < 0 ? C.negative : C.positive }]}>
+                      {step > 0 ? `+${step}` : String(step)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
-          <SuggestField
-            label="BESCHREIBUNG (OPTIONAL)"
-            value={beschreibung}
-            onChangeText={setBeschreibung}
-            placeholder="Wofür?"
-            suggestions={beschreibungSuggestions}
-            onDeleteSuggestion={hideDescriptionSuggestion}
-          />
+              <SuggestField
+                label="PERSON"
+                value={person}
+                onChangeText={t => { setPerson(t); setError(''); }}
+                placeholder={personPlaceholder}
+                suggestions={personSuggestions}
+                onDeleteSuggestion={hidePersonSuggestion}
+                autoCapitalize="words"
+              />
 
-          {error ? <Text style={[layout.error, { color: C.accent }]}>{error}</Text> : null}
+              <SuggestField
+                label="BESCHREIBUNG (OPTIONAL)"
+                value={beschreibung}
+                onChangeText={setBeschreibung}
+                placeholder="Wofür?"
+                suggestions={beschreibungSuggestions}
+                onDeleteSuggestion={hideDescriptionSuggestion}
+              />
 
-          <View style={layout.btnRow}>
-            <Pressable style={[layout.btnSecondary, { borderColor: C.border }]} onPress={handleClose}>
-              <Text style={[layout.btnSecondaryText, { color: C.textSecondary }]}>Abbrechen</Text>
-            </Pressable>
-            <Pressable style={[layout.btnPrimary, { backgroundColor: C.accent }]} onPress={handleSave}>
-              <Text style={[layout.btnPrimaryText, { color: C.textOnAccent }]}>Speichern</Text>
-            </Pressable>
-          </View>
+              {error ? <Text style={[layout.error, { color: C.accent }]}>{error}</Text> : null}
 
-          <TextInput
-            ref={amountRef}
-            style={layout.hiddenInput}
-            value={betragRaw}
-            onChangeText={t => { setBetragRaw(t); setError(''); }}
-            keyboardType="decimal-pad"
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
+              <View style={layout.btnRow}>
+                <Pressable style={[layout.btnSecondary, { borderColor: C.border }]} onPress={handleClose}>
+                  <Text style={[layout.btnSecondaryText, { color: C.textSecondary }]}>Abbrechen</Text>
+                </Pressable>
+                <Pressable style={[layout.btnPrimary, { backgroundColor: C.accent }]} onPress={handleSave}>
+                  <Text style={[layout.btnPrimaryText, { color: C.textOnAccent }]}>Speichern</Text>
+                </Pressable>
+              </View>
+
+              <TextInput
+                ref={amountRef}
+                style={layout.hiddenInput}
+                value={betragRaw}
+                onChangeText={t => { setBetragRaw(t); setError(''); }}
+                keyboardType="decimal-pad"
+              />
+            </ScrollView>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
@@ -359,7 +402,11 @@ export function EntrySheet({ visible, mode, onClose, onSave }: EntrySheetProps) 
 // MARK: - Styles
 
 const layout = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' },
+  container: { flex: 1 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'black',
+  },
   sheetWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '90%' },
   sheet: {
     borderTopLeftRadius: R.sheet,
