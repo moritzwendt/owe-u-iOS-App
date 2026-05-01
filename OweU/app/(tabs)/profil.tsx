@@ -18,7 +18,7 @@ import { S, R } from '@/constants/theme';
 
 // MARK: - App Version
 
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 
 const MOCK_USER = {
   name: 'Max Mustermann',
