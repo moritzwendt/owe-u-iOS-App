@@ -207,7 +207,7 @@ const layout = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: S.screenPad, paddingBottom: S.section, gap: S.base },
   titleRow: { flexDirection: 'row', marginBottom: S.xs },
-  screenTitle: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5 },
+  screenTitle: { fontSize: 30, fontFamily: 'Grandstander-ExtraBold', letterSpacing: -0.5 },
   nettoCard: { borderRadius: R.lg, padding: S.xl, borderWidth: 1, borderLeftWidth: 3, gap: S.xs },
   nettoEyebrow: { fontSize: 10, fontWeight: '600', letterSpacing: 1.2 },
   nettoAmount: { fontSize: 48, fontWeight: '700', letterSpacing: -1, lineHeight: 56, fontVariant: ['tabular-nums'] },

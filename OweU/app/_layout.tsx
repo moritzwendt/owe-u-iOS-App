@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -44,10 +45,14 @@ const NAV_THEMES = {
 
 function ThemedNavigator() {
   const { colorMode, colors } = useTheme();
+  const [fontsLoaded] = useFonts({
+    'Grandstander-Bold': require('../assets/fonts/Grandstander-Bold.ttf'),
+    'Grandstander-ExtraBold': require('../assets/fonts/Grandstander-ExtraBold.ttf'),
+  });
 
   useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

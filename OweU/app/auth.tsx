@@ -376,8 +376,8 @@ const sc = StyleSheet.create({
 const br = StyleSheet.create({
   block: { alignItems: 'center', gap: S.xs, paddingBottom: S.sm },
   wordRow: { flexDirection: 'row', alignItems: 'baseline' },
-  wordAccent: { fontSize: 42, fontWeight: '800', letterSpacing: -1.5 },
-  wordPlain: { fontSize: 42, fontWeight: '800', letterSpacing: -1.5 },
+  wordAccent: { fontSize: 42, fontFamily: 'Grandstander-ExtraBold', letterSpacing: -1 },
+  wordPlain: { fontSize: 42, fontFamily: 'Grandstander-ExtraBold', letterSpacing: -1 },
   tagline: { fontSize: 15 },
 });
 
