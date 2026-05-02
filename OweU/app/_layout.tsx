@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import 'react-native-reanimated';
 
 import { AppProvider } from '@/store/app-context';
+import { AuthProvider } from '@/store/auth-context';
 import { ThemeContextProvider, useTheme } from '@/store/theme-context';
 import { darkColors, lightColors } from '@/constants/theme';
 
@@ -61,6 +62,7 @@ function ThemedNavigator() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
       </ThemeProvider>
@@ -71,9 +73,11 @@ function ThemedNavigator() {
 export default function RootLayout() {
   return (
     <AppProvider>
-      <ThemeContextProvider>
-        <ThemedNavigator />
-      </ThemeContextProvider>
+      <AuthProvider>
+        <ThemeContextProvider>
+          <ThemedNavigator />
+        </ThemeContextProvider>
+      </AuthProvider>
     </AppProvider>
   );
 }

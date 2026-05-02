@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -135,6 +136,11 @@ export default function UebersichtScreen() {
   const C = useColors();
   const insets = useSafeAreaInsets();
   const { schulden, forderungen } = useApp();
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  });
 
   const openSchulden = schulden.filter(s => !s.bezahlt).reduce((sum, s) => sum + s.betrag, 0);
   const openForderungen = forderungen.filter(f => !f.erhalten).reduce((sum, f) => sum + f.betrag, 0);
@@ -152,11 +158,15 @@ export default function UebersichtScreen() {
   return (
     <View style={[layout.safe, { backgroundColor: C.bg }]}>
       <ScrollView
+        ref={scrollRef}
         style={layout.scroll}
         contentContainerStyle={[layout.content, { paddingTop: insets.top + S.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[layout.screenTitle, { color: C.textPrimary }]}>OweYou</Text>
+        <View style={layout.titleRow}>
+          <Text style={[layout.screenTitle, { color: C.accent }]}>Owe</Text>
+          <Text style={[layout.screenTitle, { color: C.textPrimary }]}>You</Text>
+        </View>
 
         <NettoCard netto={netto} />
 
@@ -196,7 +206,8 @@ const layout = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
   content: { paddingHorizontal: S.screenPad, paddingBottom: S.section, gap: S.base },
-  screenTitle: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5, marginBottom: S.xs },
+  titleRow: { flexDirection: 'row', marginBottom: S.xs },
+  screenTitle: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5 },
   nettoCard: { borderRadius: R.lg, padding: S.xl, borderWidth: 1, borderLeftWidth: 3, gap: S.xs },
   nettoEyebrow: { fontSize: 10, fontWeight: '600', letterSpacing: 1.2 },
   nettoAmount: { fontSize: 48, fontWeight: '700', letterSpacing: -1, lineHeight: 56, fontVariant: ['tabular-nums'] },

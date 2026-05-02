@@ -15,11 +15,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useColors, useTheme, type ThemePreference } from '@/store/theme-context';
 import { useApp } from '@/store/app-context';
+import { useAuth } from '@/store/auth-context';
 import { S, R } from '@/constants/theme';
 
 // MARK: - App Version
 
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.1.0';
 
 const MOCK_USER = {
   name: 'Max Mustermann',
@@ -166,6 +167,7 @@ export default function ProfilScreen() {
   const insets = useSafeAreaInsets();
   const { preference, setPreference } = useTheme();
   const { resetAll } = useApp();
+  const { user, signOut } = useAuth();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [commit, setCommit] = useState<CommitInfo | null>(null);
@@ -207,7 +209,7 @@ export default function ProfilScreen() {
   function handleLogout() {
     Alert.alert('Abmelden', 'Du wirst auf diesem Gerät abgemeldet.', [
       { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Abmelden', style: 'destructive', onPress: () => Alert.alert('Abgemeldet', 'Auf Wiedersehen!') },
+      { text: 'Abmelden', style: 'destructive', onPress: () => signOut() },
     ]);
   }
 
@@ -255,7 +257,7 @@ export default function ProfilScreen() {
 
         <SectionLabel label="ACCOUNT" />
         <View style={[layout.card, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <ValueRow label="Angemeldet als" value={MOCK_USER.email} />
+          <ValueRow label="Angemeldet als" value={user?.email ?? MOCK_USER.email} />
           <NavRow label="Passwort ändern" onPress={() => router.push('/passwort-aendern')} />
           <NavRow label="E-Mail ändern" onPress={() => router.push('/email-aendern')} />
           <WarnRow label="Abmelden" onPress={handleLogout} last />
